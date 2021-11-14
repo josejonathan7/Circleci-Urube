@@ -1,0 +1,30 @@
+{
+  "name": "CircleCi-Utube",
+  "version": "1.0.0",
+  "description": "projeto para começar a aprender a desenvolver orientado a testes",
+  "main": "index.js",
+  "scripts": {
+    "build": "sucrase ./src -d ./dist --transforms imports",
+    "dev": "nodemon ./src/app.js",
+    "start": "node ./dist/app.js",
+    "test": "jest"
+  },
+  "repository": "https://github.com/josejonathan7/Circleci-Urube.git",
+  "author": "José Jonathan",
+  "license": "MIT",
+  "devDependencies": {
+    "@sucrase/jest-plugin": "^2.2.0",
+    "@types/jest": "^27.0.2",
+    "jest": "^27.3.1",
+    "nodemon": "^2.0.15",
+    "sucrase": "^3.20.3"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "jest": {
+    "transform": {
+      ".(js|jsx|ts|tsx)": "@sucrase/jest-plugin"
+    }
+  }
+}
