@@ -10,7 +10,7 @@ app.use(cors());
 let products = [];
 
 app.get('/products', (request, response) => {
-
+    return response.json(products);
 });
 
 app.post('/products', (request, response) => {
@@ -54,7 +54,16 @@ app.put('/products/:id', (request, response) => {
 });
 
 app.delete('/products/:code', (request, response) => {
+    const { code } = request.params;
+    const productsForDeleteIndex = products.findIndex( item => item.code == code);
 
+    if(productsForDeleteIndex === -1){
+        return response.status(400).send();
+    }else {
+        products = products.filter(item => item.code !== code);
+
+        return response.status(204).send();
+    }
 });
 
 app.post('/products/:code/love', (request, response) => {
