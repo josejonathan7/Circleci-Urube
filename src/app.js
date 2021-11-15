@@ -15,7 +15,7 @@ app.get('/products', (request, response) => {
 
 app.post('/products', (request, response) => {
     const { code, description, buyPrice, sellPrice, tags } = request.body;
-    const verifyProduct = products.find(value => value.code === code);
+    const verifyProduct = products.find(value => value.code == code);
     const checkIfThereLove = verifyProduct ? verifyProduct.lovers : 0;
 
     const product = {
@@ -81,7 +81,17 @@ app.post('/products/:code/love', (request, response) => {
 });
 
 app.get('/products/:code', (request, response) => {
+    const { code } = request.params;
 
+    const product = products.find(item => item.code == code);
+
+    if(!product) {
+        return response.status(204).send();
+    } else {
+        const productData = products.filter( item => item.code == code);
+
+        return response.json(productData);
+    }
 });
 
 export {app};

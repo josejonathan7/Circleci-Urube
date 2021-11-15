@@ -1,6 +1,6 @@
 //A quantidade vendida pode ser de uma ou mais unidades
 
-import { test, expect, beforeEach, afterEach } from '@jest/globals';
+import { test, expect, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../src/app';
 
@@ -25,8 +25,7 @@ describe('#Teste de produtos', () => {
         }];
     });
 
-
-    describe('##Teste de criação de produto', () => {
+    describe('#Teste de criação de produto', () => {
 
         test('-> deve ser possivel adicionar um novo produto', async () => {
             const response = await request(app).post('/products').send(products[0]);
@@ -44,7 +43,7 @@ describe('#Teste de produtos', () => {
         });
     });
 
-    describe('##Tesde de atualização de produto', () => {
+    describe('#Tesde de atualização de produto', () => {
 
         test('-> Deve ser possivel autalizar dados de um produto', async () => {
             const response = await request(app).post('/products').send(products[0]);
@@ -73,7 +72,7 @@ describe('#Teste de produtos', () => {
         });
     });
 
-    describe('##Remoção de conteúdo', () => {
+    describe('#Remoção de conteúdo', () => {
         test('-> Não deve ser possivel remover um produto inexistente', async () => {
             await request(app).delete('/products/654d6asd45').expect(400);
         });
@@ -97,14 +96,14 @@ describe('#Teste de produtos', () => {
         });
     });
 
-    describe('##Listagem de conteúdo', () => {
+    describe('#Listagem de conteúdo', () => {
         beforeEach(() => {
             async function clearData() {
                 await request(app).delete(`/products/${products[1].code}`);
             }
 
             clearData();
-        })
+        });
 
         test('-> Deve ser possível listar todos os produtos', async () => {
             await request(app).post('/products').send(products[0]);
@@ -115,12 +114,40 @@ describe('#Teste de produtos', () => {
         })
     });
 
-    describe('## Buscar conteúdo', () => {
-        //test('-> Deve ser possivel buscar produtos por código no array', () => {});
-        //test('-> Deve retornar um status code 204 se não encontrar o produto', () => {});
+    describe('#Buscar conteúdo', () => {
+        beforeEach(() => {
+            async function clearData() {
+                await request(app).delete(`/products/${products[0].code}`);
+            }
+
+            clearData();
+        });
+
+        test('-> Deve ser possivel buscar produtos por código no array', async () => {
+            await request(app).post('/products').send(products[1]);
+            await request(app).post('/products').send(products[0]);
+            const response = await request(app).post('/products').send(products[0]);
+           
+
+            const searchProduct = [{
+                ...response.body
+            }];
+
+            const search = await request(app).get(`/products/${response.body.code}`);
+
+            expect(search.body).toEqual(expect.arrayContaining(searchProduct));
+        });
+
+        test('-> Deve retornar um status code 204 se não encontrar o produto', async () => {
+            await request(app).post('/products').send(products[1]);
+
+            await request(app).get(`/products/${products[0].code}`).expect(204);
+
+        });
     });
 
-    describe('##Lovers', () => {
+    describe('#Lovers', () => {
+        
 
         test('-> Deve ser possivel dar love em um produto', async () => {
             const response = await request(app).post('/products').send(products[0]);
@@ -128,7 +155,55 @@ describe('#Teste de produtos', () => {
             const responseLove = await request(app).post(`/products/${response.body.code}/love`).send(response.body);
 
             expect(responseLove.body).toMatchObject({lovers: 1});
-        })
+        });
+
+        test('-> Não deve ser possível atualizar o número de lovers de um produto manualmente', async () => {
+            const response = await request(app).post('/products').send(products[0]);
+
+            const updateForcedProduct = {
+                ...response.body,
+                lovers: 10
+            };
+
+            const responseLove = await request(app).put(`/products/${response.body.id}`).send(updateForcedProduct);
+
+            expect(responseLove.body).not.toBe(updateForcedProduct);
+        });
+
+        test('-> Deve possuir o número de lovers igual a 0 um produto recém criado o qual o seu código seja inexistente', async () => {
+            const response = await request(app).post('/products').send(products[1]);
+
+            const objectExpect = {
+                ...response.body,
+                lovers: 0
+            }
+
+            expect(response.body).toEqual(objectExpect);
+        });
+        
+        test('-> Um produto deverá herdar o número de lovers caso seu código já exista', async () => {
+            const testLove = await request(app).post('/products').send(products[1]);
+            await request(app).post(`/products/${testLove.body.code}/love`).send(testLove.body);
+
+            const response = await request(app).post('/products').send(products[1]);
+
+            console.log(response.body)
+            const objectExpect = {
+                ...response.body,
+                lovers: 1
+            };
+
+            expect(response.body).toEqual(objectExpect);
+        });
+
+        test('->  Produtos de mesmo código devem compartilhar a mesma quantidade de lovers', async () => {
+            const testLove = await request(app).post('/products').send(products[1]);
+            const response = await request(app).post('/products').send(products[1]);
+
+            const expectObject = testLove.body.lovers;
+            
+            expect(response.body.lovers).toEqual(expectObject);
+        });
 
     });
 });
