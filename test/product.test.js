@@ -25,10 +25,6 @@ describe('#Teste de produtos', () => {
         }];
     });
 
-    afterEach(async () => {
-        await request(app).delete(`/products/${products[0].code}`);
-    });
-
 
     describe('##Teste de criação de produto', () => {
 
@@ -89,21 +85,50 @@ describe('#Teste de produtos', () => {
         });
 
         test('-> Deve ser possivel remover os produtos pelo código', async () => {
-            await request(app).delete(`/products/${products[0].code}`);
-            console.log(products[0].code)
+            const response = await request(app).post('/products').send(products[0]);
+            await request(app).post('/products').send(products[0]);
+            await request(app).post('/products').send(products[0]);
+            await request(app).post('/products').send(products[1]);
+            await request(app).delete(`/products/${response.body.code}`);
+            
             const responseGet = await request(app).get('/products');
-
-            expect(responseGet.body).toHaveLength(3);
+    
+            expect(responseGet.body).toHaveLength(1);
         });
     });
 
     describe('##Listagem de conteúdo', () => {
+        beforeEach(() => {
+            async function clearData() {
+                await request(app).delete(`/products/${products[1].code}`);
+            }
+
+            clearData();
+        })
 
         test('-> Deve ser possível listar todos os produtos', async () => {
+            await request(app).post('/products').send(products[0]);
+            await request(app).post('/products').send(products[0]);
+            await request(app).post('/products').send(products[1]);
             const responseGet = await request(app).get('/products');
-
-            expect(responseGet.body).toHaveLength(5);
+            expect(responseGet.body).toHaveLength(3);
         })
     });
 
+    describe('## Buscar conteúdo', () => {
+        //test('-> Deve ser possivel buscar produtos por código no array', () => {});
+        //test('-> Deve retornar um status code 204 se não encontrar o produto', () => {});
+    });
+
+    describe('##Lovers', () => {
+
+        test('-> Deve ser possivel dar love em um produto', async () => {
+            const response = await request(app).post('/products').send(products[0]);
+
+            const responseLove = await request(app).post(`/products/${response.body.code}/love`).send(response.body);
+
+            expect(responseLove.body).toMatchObject({lovers: 1});
+        })
+
+    });
 });

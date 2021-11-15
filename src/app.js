@@ -60,14 +60,24 @@ app.delete('/products/:code', (request, response) => {
     if(productsForDeleteIndex === -1){
         return response.status(400).send();
     }else {
-        products = products.filter(item => item.code !== code);
+        products = products.filter(item => item.code != code);
 
         return response.status(204).send();
     }
 });
 
 app.post('/products/:code/love', (request, response) => {
+    const { code } = request.params;
 
+    const product = products.find(item => item.code == code);
+
+    if(!product){
+        return response.status(400).send();
+    } else {
+        products.filter(item => item.code == code).map(value => value.lovers += 1 );
+
+        return response.json({lovers: product.lovers })
+    }
 });
 
 app.get('/products/:code', (request, response) => {
