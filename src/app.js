@@ -1,6 +1,6 @@
-import express from 'express';
-import cors from 'cors';
-import { uuid } from 'uuidv4';
+import express from "express";
+import cors from "cors";
+import { Product } from "./model/product";
 
 const app = express();
 
@@ -9,89 +9,92 @@ app.use(cors());
 
 let products = [];
 
-app.get('/products', (request, response) => {
-    return response.json(products);
+app.get("/products", (request, response) => response.json(products));
+
+app.post("/products", (request, response) => {
+	const {
+		code, description, buyPrice, sellPrice, tags, id
+	} = request.body;
+
+	const verifyProduct = products.find((value) => value.code == code);
+	const checkIfThereLove = verifyProduct ? verifyProduct.lovers : 0;
+
+	const product = new Product(code,
+		description,
+		buyPrice,
+		sellPrice,
+		tags,
+		checkIfThereLove,
+		id
+	);
+
+	products.push(product);
+
+	response.status(201).json(product);
 });
 
-app.post('/products', (request, response) => {
-    const { code, description, buyPrice, sellPrice, tags } = request.body;
-    const verifyProduct = products.find(value => value.code == code);
-    const checkIfThereLove = verifyProduct ? verifyProduct.lovers : 0;
+app.put("/products/:id", (request, response) => {
+	const { id } = request.params;
+	const {
+		code, description, buyPrice, sellPrice, tags,
+	} = request.body;
 
-    const product = {
-        id: uuid(),
-        code, 
-        description, 
-        buyPrice, 
-        sellPrice, 
-        tags,
-        lovers: checkIfThereLove
-    }
+	const verifyProductExists = products.find((product) => product.id === id);
 
-    products.push(product);
+	if (verifyProductExists) {
+		verifyProductExists.code = code;
+		verifyProductExists.description = description;
+		verifyProductExists.buyPrice = buyPrice;
+		verifyProductExists.sellPrice = sellPrice;
+		verifyProductExists.tags = tags;
 
-    response.status(201).json(product);
+		response.json(verifyProductExists);
+	} else {
+		response.status(400).send();
+	}
 });
 
-app.put('/products/:id', (request, response) => {
-    const { id } = request.params;
-    const { code, description, buyPrice, sellPrice, tags } = request.body;
+app.delete("/products/:code", (request, response) => {
+	const { code } = request.params;
 
-    const verifyProductExists = products.find(product => product.id === id);
+	const productsForDeleteIndex = products.findIndex((item) => item.code === Number(code));
 
-    if(verifyProductExists){
-        verifyProductExists.code = code;
-        verifyProductExists.description= description;
-        verifyProductExists.buyPrice = buyPrice;
-        verifyProductExists.sellPrice = sellPrice;
-        verifyProductExists.tags = tags;
+	if (productsForDeleteIndex === -1) {
+		return response.status(400).send();
+	}
+	products = products.filter((item) => item.code !== Number(code));
 
-        response.json(verifyProductExists);
-    }else {
-        response.status(400).send();
-    }
-
+	return response.status(204).send();
 });
 
-app.delete('/products/:code', (request, response) => {
-    const { code } = request.params;
-    const productsForDeleteIndex = products.findIndex( item => item.code == code);
+app.post("/products/:code/love", (request, response) => {
+	const { code } = request.params;
 
-    if(productsForDeleteIndex === -1){
-        return response.status(400).send();
-    }else {
-        products = products.filter(item => item.code != code);
+	const product = products.find((item) => item.code === Number(code));
 
-        return response.status(204).send();
-    }
+	if (!product) {
+		return response.status(400).send();
+	}
+	products.filter((item) => item.code === Number(code)).map((value) => {
+		// eslint-disable-next-line no-param-reassign
+		value.lovers += 1;
+		return value.lovers;
+	});
+
+	return response.json({ lovers: product.lovers });
 });
 
-app.post('/products/:code/love', (request, response) => {
-    const { code } = request.params;
+app.get("/products/:code", (request, response) => {
+	const { code } = request.params;
 
-    const product = products.find(item => item.code == code);
+	const product = products.find((item) => item.code === Number(code));
 
-    if(!product){
-        return response.status(400).send();
-    } else {
-        products.filter(item => item.code == code).map(value => value.lovers += 1 );
+	if (!product) {
+		return response.status(204).send();
+	}
+	const productData = products.filter((item) => item.code === Number(code));
 
-        return response.json({lovers: product.lovers })
-    }
+	return response.json(productData);
 });
 
-app.get('/products/:code', (request, response) => {
-    const { code } = request.params;
-
-    const product = products.find(item => item.code == code);
-
-    if(!product) {
-        return response.status(204).send();
-    } else {
-        const productData = products.filter( item => item.code == code);
-
-        return response.json(productData);
-    }
-});
-
-export {app};
+export { app };
